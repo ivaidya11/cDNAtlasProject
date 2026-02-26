@@ -1,0 +1,14 @@
+[project]
+name = "cDNAtlasProject"
+version = "0.1.0"
+description = "My cDNA analysis project"
+readme = 'README.md'
+authors = [
+    { name="Ira Vaidya", email="ivaidya@tudelft.nl" }
+]
+requires-python = ">=3.11"
+
+dependencies = [
+    "jupyter>=1.1.1",
+    "poreflow>=0.2.5",
+]

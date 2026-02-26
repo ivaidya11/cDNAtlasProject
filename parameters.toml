@@ -1,0 +1,51 @@
+
+[input]
+name = "My New Measurement"
+path = "/Users/iravaidya/Documents/Bachelors/BEP/raw_data/"
+samplingRate = 50000
+file = "TUD257703_20250612_FBC75794_MN45752_sequencing_run_cDNA_Y_NoTranslation_column_pur_run1_20511.fast5"
+target_SamplingRate = 5000
+
+[output]
+path = "./"
+
+[env]
+n_jobs = 8
+verbose = 2 # Verbosity level, 0 for no print, 1 for print summary, 2 for progress bars, 3 for progress bars and task reporting
+
+[plot]
+current_range = [0, 300]
+out = "./Images"
+
+[event_finding]
+open_state_range = [200, 300] # Open state range in pA to search
+voltage_range = [175, 185] # Acceptable voltage range in mV
+closing_iterations = 10 # Number of morphological closing operations to perform on the "is-event" mask. More means more contiguous events
+boundary_trim = 5 # Samples to trim off the start and end of the events
+n_components = 3 # Number of components for the open state current fit
+degree = 1 # Degree of the open pore current fit
+min_frac_os = 0.01 # Reject all events if less that this fraction of the current in the measurement is marked as at open state
+
+[step_finding]
+sensitivity = 3 # Sensitivity of the step finder, higher means finding fewer steps
+min_level_length = 10 # Minimum size of a step in samples
+
+[event_filtering]
+min_duration = 1 # Minimum event duration in seconds, set to -1 to disable
+min_n_steps = 45 # Minimum number of steps
+max_n_steps = 800 # Maximum number of steps
+min_binned_entropy_of_means = 2.5 # typical of M2 MspA DNA sequencing
+min_step_rate = 12 # typical of Hel308 at 37C, 1 mM ATP
+min_ios = 200 # Max local open state range in pA acceptable for an event
+max_ios = 300 # Min local open state range in pA acceptable for an event
+
+
+[boundary]
+# template_DNA_5_3 = "TTACTGAAGTCTCACGTGCCTGGTATATTAGCGTCCACTCTCACTATCGGATTCTACATCGGTCGTAGCC"
+template_DNA_5_3 = "TCCTTTTATCGTCATCATCTTTGTAATCGCCGCT" # cDNA project
+trim_right = 8
+ref_length = 54
+segment_step_to_end = 4
+window_length = 40
+
+
