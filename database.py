@@ -10,7 +10,6 @@ Changes from v1:
 - IOS lowered to 240 pA to match real experimental data
 - Charge direction fixed: positive charge DECREASES current, negative INCREASES
   (based on Motone et al. 2024, Nature — matches physical observations in CsgG/MspA)
-- Open state plateau added at the start of each trace
 """
 
 import numpy as np
@@ -31,15 +30,15 @@ SIGMA_WHITE     = 8.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 3.0   # pA — 1/f (flicker) noise amplitude
 N_TRACES        = 500   # number of traces to generate
 PEP_LENGTH      = 20     # amino acids per peptide
-LINKER_STEPS    = 6     # number of half-steps in linker region
-OPEN_STATE_STEPS = 10   # number of half-steps in open state plateau at start
+LINKER_STEPS    = 6     # number of levels in linker region
+
 
 # Multi-residue sensing window (MspA constriction zone spans ~3-5 AAs)
 WINDOW_HALF     = 2     # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5)
 
-# Variable dwell times per amino acid (exponential distribution)
-MEAN_DWELL_STEPS = 5    # mean steps per amino acid
-MIN_DWELL_STEPS  = 1    # minimum steps per amino acid
+# Timeseries parameters
+SAMPLING_FREQ   = 5000  # Hz — samples per second
+MEAN_DWELL_MS   = 5   # ms — mean dwell time per step/residue (exponential distribution)
 
 # ─── Amino Acid Properties ────────────────────────────────────────────────────
 # Volume: normalized van der Waals volume (0 = smallest, 1 = largest)
@@ -90,49 +89,41 @@ def peptide_to_cdna(peptide: str) -> str:
     """Convert peptide sequence to cDNA using one codon per amino acid."""
     return ''.join(CODON_TABLE[aa] for aa in peptide)
 
-
-def simulate_open_state(start_step: int) -> tuple:
-    """
-    Simulate the open state plateau at the start of the trace.
-    This is what the pore looks like before the molecule enters —
-    current sits at IOS with low noise.
-
-    Returns (step_indices, current_pA)
-    """
-    steps = np.arange(OPEN_STATE_STEPS) + start_step
-    # Open state has lower noise than blocked states
-    current = np.full(OPEN_STATE_STEPS, IOS)
-    return steps, current
+def _dwell_samples() -> int:
+    """Sample a dwell duration: max(5 ms, Exp(MEAN_DWELL_MS)), converted to samples."""
+    dwell_ms = max(5.0, np.random.exponential(MEAN_DWELL_MS))
+    return int(dwell_ms * SAMPLING_FREQ / 1000)
 
 
-def simulate_dna_region(cdna: str, start_step: int) -> tuple:
+def simulate_dna_region(cdna: str) -> np.ndarray:
     """
     Predict DNA current levels from cDNA sequence using the 6-mer pore model.
-    Converts relative levels to pA by multiplying by IOS.
+    Each step is expanded into raw samples with an exponentially-distributed dwell.
 
-    Returns (step_indices, current_pA)
+    Returns current_pA as a 1D array of raw samples.
     """
     result = predict.predict(cdna)
+    levels = result[pf.MEAN_COL].values * IOS
 
-    # Reindex steps to start after the open state
-    n_steps = len(result)
-    steps = np.arange(n_steps) + start_step
-
-    current = result[pf.MEAN_COL].values * IOS
-    return steps, current
+    samples = []
+    for level in levels:
+        samples.extend([level] * _dwell_samples())
+    return np.array(samples)
 
 
-def simulate_linker_region(dna_end: float, pep_start: float, start_step: int) -> tuple:
+def simulate_linker_region(dna_end: float, pep_start: float) -> np.ndarray:
     """
     Simulate the linker as a short transition between DNA and peptide regions.
-    Uses linear interpolation — represents the physical DNA-peptide junction
-    passing through the sensing region.
+    Each interpolated level is expanded into raw samples with an exponentially-distributed dwell.
 
-    Returns (step_indices, current_pA)
+    Returns current_pA as a 1D array of raw samples.
     """
     levels = np.linspace(dna_end, pep_start, LINKER_STEPS)
-    steps = np.arange(LINKER_STEPS) + start_step
-    return steps, levels
+
+    samples = []
+    for level in levels:
+        samples.extend([level] * _dwell_samples())
+    return np.array(samples)
 
 
 def _compute_window_current(peptide: str, center_idx: int) -> float:
@@ -167,7 +158,7 @@ def _compute_window_current(peptide: str, center_idx: int) -> float:
     return pep_baseline - ALPHA * weighted_volume - BETA * weighted_charge
 
 
-def simulate_peptide_region(peptide: str, start_step: int) -> tuple:
+def simulate_peptide_region(peptide: str) -> np.ndarray:
     """
     Simulate peptide current levels using a Gaussian-windowed volume + charge model
     with exponentially-distributed dwell times per amino acid.
@@ -177,24 +168,15 @@ def simulate_peptide_region(peptide: str, start_step: int) -> tuple:
         on each side, weighted by a Gaussian. Reflects MspA's ~3-5 AA constriction.
 
     Dwell times:
-        Drawn from Exp(MEAN_DWELL_STEPS), minimum MIN_DWELL_STEPS. Reflects thermal
-        fluctuations in translocation speed and peptide dynamics inside the pore.
+        Drawn from max(5 ms, Exp(MEAN_DWELL_MS)), converted to samples at SAMPLING_FREQ.
 
-    Returns (step_indices, current_pA)
+    Returns current_pA as a 1D array of raw samples.
     """
-    steps = []
-    currents = []
-    current_step = start_step
-
+    samples = []
     for i in range(len(peptide)):
         level = _compute_window_current(peptide, i)
-        dwell = max(MIN_DWELL_STEPS, int(np.random.exponential(MEAN_DWELL_STEPS)))
-        for _ in range(dwell):
-            steps.append(current_step)
-            currents.append(level)
-            current_step += 1
-
-    return np.array(steps), np.array(currents)
+        samples.extend([level] * _dwell_samples())
+    return np.array(samples)
 
 
 def add_noise(current: np.ndarray, sigma: float = SIGMA_WHITE) -> np.ndarray:
@@ -230,41 +212,43 @@ def simulate_trace(peptide: str) -> pd.DataFrame:
     Trace structure:
         [DNA] → [linker] → [peptide]
 
+    Each step is expanded into raw samples at SAMPLING_FREQ Hz with
+    exponentially-distributed dwell times (min 5 ms, mean MEAN_DWELL_MS).
+
     Returns a DataFrame with columns:
-        step          — step index (x axis)
+        time_ms       — cumulative time in milliseconds (x axis)
         current_pA    — simulated current with noise (y axis)
         region        — ground truth label: 'DNA', 'linker', 'peptide'
     """
     cdna = peptide_to_cdna(peptide)
-    rows = []
 
     # 1. DNA region — helicase ratchets cDNA through pore
-    dna_steps, dna_current = simulate_dna_region(cdna, start_step=0)
-    dna_noisy = add_noise(dna_current)
-    for step, current in zip(dna_steps, dna_noisy):
-        rows.append({'step': step, 'current_pA': current, 'region': 'DNA'})
+    dna_current = simulate_dna_region(cdna)
 
-    # 3. Linker region — junction between DNA and peptide
-    linker_start = int(dna_steps[-1]) + 1
-    pep_baseline_pA = PEP_BASELINE * IOS
-    linker_steps, linker_current = simulate_linker_region(
+    # 2. Linker region — junction between DNA and peptide
+    linker_current = simulate_linker_region(
         dna_end=dna_current[-1],
-        pep_start=pep_baseline_pA,
-        start_step=linker_start
+        pep_start=PEP_BASELINE * IOS,
     )
-    linker_noisy = add_noise(linker_current)
-    for step, current in zip(linker_steps, linker_noisy):
-        rows.append({'step': step, 'current_pA': current, 'region': 'linker'})
 
-    # 4. Peptide region — amino acids pass through sensing region
-    pep_start = int(linker_steps[-1]) + 1
-    pep_steps, pep_current = simulate_peptide_region(peptide, start_step=pep_start)
-    pep_noisy = add_noise(pep_current)
-    for step, current in zip(pep_steps, pep_noisy):
-        rows.append({'step': step, 'current_pA': current, 'region': 'peptide'})
+    # 3. Peptide region — amino acids pass through sensing region
+    pep_current = simulate_peptide_region(peptide)
 
-    df = pd.DataFrame(rows)
-    return df
+    # Apply noise per region
+    dna_noisy     = add_noise(dna_current)
+    linker_noisy  = add_noise(linker_current)
+    pep_noisy     = add_noise(pep_current)
+
+    # Concatenate and build time axis
+    all_current = np.concatenate([dna_noisy, linker_noisy, pep_noisy])
+    regions = (
+        ['DNA']    * len(dna_current) +
+        ['linker'] * len(linker_current) +
+        ['peptide'] * len(pep_current)
+    )
+    time_ms = np.arange(len(all_current)) * (1000 / SAMPLING_FREQ)
+
+    return pd.DataFrame({'time_ms': time_ms, 'current_pA': all_current, 'region': regions})
 
 
 # ─── Generate Database ────────────────────────────────────────────────────────
@@ -309,7 +293,6 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
     peptide = trace['peptide_sequence'].iloc[0]
 
     colors = {
-        'open_state': 'gray',
         'DNA':        'steelblue',
         'linker':     'green',
         'peptide':    'orange'
@@ -317,13 +300,12 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
 
     fig, ax = plt.subplots(figsize=(13, 5))
     for region, group in trace.groupby('region', sort=False):
-        ax.step(group['step'], group['current_pA'],
-                where='mid', label=region,
-                color=colors[region], linewidth=1.5)
+        ax.plot(group['time_ms'], group['current_pA'],
+                label=region, color=colors[region], linewidth=0.8)
 
     ax.axhline(IOS, color='gray', linestyle='--', alpha=0.4, label='IOS reference')
     ax.set_title(f'Trace {trace_id} — Peptide: {peptide}')
-    ax.set_xlabel('Step number')
+    ax.set_xlabel('Time (ms)')
     ax.set_ylabel('Current (pA)')
     ax.legend()
     ax.grid(True)
