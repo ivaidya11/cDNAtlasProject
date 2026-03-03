@@ -16,3 +16,6 @@ dependencies = [
     "poreflow>=0.3.3",
     "seaborn>=0.13.2",
 ]
+
+[tool.uv]
+link-mode = "copy"
