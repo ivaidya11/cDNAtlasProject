@@ -28,13 +28,13 @@ ALPHA           = 20    # pA — how much volume affects current (bigger AA = mo
 BETA            = 5     # pA — how much charge affects current per unit charge
 SIGMA_WHITE     = 8.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 3.0   # pA — 1/f (flicker) noise amplitude
-N_TRACES        = 500   # number of traces to generate
+N_TRACES        = 600   # number of traces to generate
 PEP_LENGTH      = 20     # amino acids per peptide
 LINKER_STEPS    = 6     # number of levels in linker region
 
 
 # Multi-residue sensing window (MspA constriction zone spans ~3-5 AAs)
-WINDOW_HALF     = 2     # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5)
+WINDOW_HALF     = 3     # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5)
 
 # Timeseries parameters
 SAMPLING_FREQ   = 5000  # Hz — samples per second
