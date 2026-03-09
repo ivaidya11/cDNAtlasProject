@@ -1,7 +1,7 @@
 
 [input]
 name = "My New Measurement"
-path = "/Users/iravaidya/Documents/Bachelors/BEP/raw_data/"
+path = "/Users/iravaidya/Documents/Bachelors/BEP/raw_data/keepdownloaded"
 samplingRate = 50000
 file = "TUD257703_20250612_FBC75794_MN45752_sequencing_run_cDNA_Y_NoTranslation_column_pur_run1_20511.fast5"
 target_SamplingRate = 5000

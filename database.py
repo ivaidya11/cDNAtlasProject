@@ -1,15 +1,8 @@
 """
-Simulated Nanopore Trace Database Generator
-Cees Dekker Lab — cDNA display peptide sequencing project
 
 Generates synthetic ionic current traces for DNA-peptide constructs
-translocating through MspA, with ground-truth region labels saved
-alongside each trace for use in segmentation model training.
+translocating through MspA
 
-Changes from v1:
-- IOS lowered to 240 pA to match real experimental data
-- Charge direction fixed: positive charge DECREASES current, negative INCREASES
-  (based on Motone et al. 2024, Nature — matches physical observations in CsgG/MspA)
 """
 
 import numpy as np
@@ -24,17 +17,18 @@ from poreflow.steps import predict
 
 IOS             = 240   # pA — open state current (lowered from 320 to match real data)
 PEP_BASELINE    = 0.5  # fraction of IOS for peptide baseline (~132 pA)
-ALPHA           = 20    # pA — how much volume affects current (bigger AA = more blockage)
-BETA            = 5     # pA — how much charge affects current per unit charge
-SIGMA_WHITE     = 8.0   # pA — white (Gaussian) noise standard deviation
+ALPHA           = 80   # pA — how much volume affects current (bigger AA = more blockage) #used to be 20, changed alpha and beta so that peptide has a larger effect on the current
+BETA            = 20   # pA — how much charge affects current per unit charge #used to be 5
+SIGMA_WHITE     = 6.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 3.0   # pA — 1/f (flicker) noise amplitude
 N_TRACES        = 600   # number of traces to generate
-PEP_LENGTH      = 20     # amino acids per peptide
+PEP_LENGTH      = 40     # amino acids per peptide # increased from 8 to 40
 LINKER_STEPS    = 6     # number of levels in linker region
 
 
 # Multi-residue sensing window (MspA constriction zone spans ~3-5 AAs)
-WINDOW_HALF     = 3     # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5)
+WINDOW_HALF     = 1   # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5) - 
+#changed it from 3 to 1 to get a wider peptide current so this might be inaccurate now
 
 # Timeseries parameters
 SAMPLING_FREQ   = 5000  # Hz — samples per second
@@ -310,7 +304,7 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
     ax.legend()
     ax.grid(True)
     plt.tight_layout()
-    plt.savefig('example_trace_v2.png', dpi=150)
+    plt.savefig('example_trace.png', dpi=150)
     plt.close()
     print("Saved to example_trace_v2.png")
 
@@ -318,13 +312,18 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    output_path = "nanopore_trace_database_v2.csv"
+    output_path = "nanopore_trace_database.csv"
 
     print(f"Generating {N_TRACES} traces (peptide length = {PEP_LENGTH})...")
     print(f"IOS = {IOS} pA | alpha = {ALPHA} | beta = {BETA} | sigma_white = {SIGMA_WHITE} | sigma_flicker = {SIGMA_FLICKER}\n")
 
     db = generate_database(N_TRACES, PEP_LENGTH, output_path)
-    plot_example_trace(db, trace_id=0)
+    plot_example_trace(db, trace_id=500)
 
     print("\n--- Current (pA) by region ---")
     print(db.groupby('region')['current_pA'].describe().round(2))
+
+
+
+
+    

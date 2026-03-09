@@ -1,5 +1,5 @@
 [project]
-name = "cdnatlasproject"
+name = "cdnatlas"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -8,14 +8,8 @@ dependencies = [
     "hmmlearn>=0.3.3",
     "ipykernel>=7.2.0",
     "ipywidgets>=8.1.8",
-    "jupyter>=1.1.1",
-    "matplotlib>=3.10.8",
-    "matplotlib-inline>=0.2.1",
     "numpy>=2.4.2",
     "pandas>=3.0.1",
     "poreflow>=0.3.3",
     "seaborn>=0.13.2",
 ]
-
-[tool.uv]
-link-mode = "copy"
