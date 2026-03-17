@@ -19,10 +19,10 @@ IOS             = 240   # pA — open state current (lowered from 320 to match r
 PEP_BASELINE    = 0.5  # fraction of IOS for peptide baseline (~132 pA)
 ALPHA           = 80   # pA — how much volume affects current (bigger AA = more blockage) #used to be 20, changed alpha and beta so that peptide has a larger effect on the current
 BETA            = 20   # pA — how much charge affects current per unit charge #used to be 5
-SIGMA_WHITE     = 6.0   # pA — white (Gaussian) noise standard deviation
-SIGMA_FLICKER   = 3.0   # pA — 1/f (flicker) noise amplitude
+SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
+SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
 N_TRACES        = 600   # number of traces to generate
-PEP_LENGTH      = 40     # amino acids per peptide # increased from 8 to 40
+PEP_LENGTH      = 20     # amino acids per peptide # increased from 8 to 20
 LINKER_STEPS    = 6     # number of levels in linker region
 
 
@@ -68,6 +68,15 @@ AA_PROPERTIES = {
 
 AA_LIST = list(AA_PROPERTIES.keys())
 
+AA_CLASS = {
+    'K': 'positive', 'R': 'positive',
+    'D': 'negative', 'E': 'negative',
+    'S': 'polar',    'T': 'polar',    'C': 'polar',
+    'N': 'polar',    'Q': 'polar',    'Y': 'polar',    'H': 'polar',
+    'G': 'nonpolar', 'A': 'nonpolar', 'V': 'nonpolar', 'L': 'nonpolar',
+    'I': 'nonpolar', 'P': 'nonpolar', 'F': 'nonpolar', 'M': 'nonpolar',
+    'W': 'nonpolar',
+}
 # ─── Codon Table (one codon per AA for simplicity) ───────────────────────────
 
 CODON_TABLE = {
@@ -234,7 +243,8 @@ def simulate_trace(peptide: str) -> pd.DataFrame:
     pep_noisy     = add_noise(pep_current)
 
     # Concatenate and build time axis
-    all_current = np.concatenate([dna_noisy, linker_noisy, pep_noisy])
+    all_current       = np.concatenate([dna_noisy, linker_noisy, pep_noisy])
+    all_clean_current = np.concatenate([dna_current, linker_current, pep_current])
     regions = (
         ['DNA']    * len(dna_current) +
         ['linker'] * len(linker_current) +
@@ -242,7 +252,8 @@ def simulate_trace(peptide: str) -> pd.DataFrame:
     )
     time_ms = np.arange(len(all_current)) * (1000 / SAMPLING_FREQ)
 
-    return pd.DataFrame({'time_ms': time_ms, 'current_pA': all_current, 'region': regions})
+    return pd.DataFrame({'time_ms': time_ms, 'current_pA': all_current,
+                         'clean_pA': all_clean_current, 'region': regions})
 
 
 # ─── Generate Database ────────────────────────────────────────────────────────
@@ -293,9 +304,10 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
     }
 
     fig, ax = plt.subplots(figsize=(13, 5))
+    ax.plot(trace['time_ms'], trace['current_pA'], color='black', linewidth=0.8, zorder=1)
     for region, group in trace.groupby('region', sort=False):
         ax.plot(group['time_ms'], group['current_pA'],
-                label=region, color=colors[region], linewidth=0.8)
+                label=region, color=colors[region], linewidth=0.8, zorder=2)
 
     ax.axhline(IOS, color='gray', linestyle='--', alpha=0.4, label='IOS reference')
     ax.set_title(f'Trace {trace_id} — Peptide: {peptide}')
