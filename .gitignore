@@ -1,5 +1,7 @@
 nanopore_trace_database.csv
+features.csv
 
+__pycache__/
+*.pyc
 
-pycache__/
-
+.venv/

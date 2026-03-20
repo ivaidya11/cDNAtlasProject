@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import pandas as pd
-from database import AA_CLASS
+from logic.database import AA_CLASS
 
 
 
