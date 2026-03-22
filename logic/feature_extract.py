@@ -10,7 +10,7 @@ from logic.database import AA_CLASS
 
 
 
-db = pd.read_csv('nanopore_trace_database.csv')
+db = pd.read_csv('../nanopore_trace_database.csv')
 
 features = []
 
