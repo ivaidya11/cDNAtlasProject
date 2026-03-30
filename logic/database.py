@@ -21,13 +21,13 @@ ALPHA           = 80   # pA — how much volume affects current (bigger AA = mor
 BETA            = 20   # pA — how much charge affects current per unit charge #used to be 5
 SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
-N_TRACES        = 600   # number of traces to generate
+N_TRACES        = 2000  # number of traces to generate
 PEP_LENGTH      = 20     # amino acids per peptide # increased from 8 to 20
 LINKER_STEPS    = 6     # number of levels in linker region
 
 
 # Multi-residue sensing window (MspA constriction zone spans ~3-5 AAs)
-WINDOW_HALF     = 1   # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5) - 
+WINDOW_HALF     = 2  # residues on each side of center (total window = 2*WINDOW_HALF+1 = 5) - 
 #changed it from 3 to 1 to get a wider peptide current so this might be inaccurate now
 
 # Timeseries parameters
@@ -275,7 +275,7 @@ def generate_database(n_traces: int, pep_length: int, output_path: str) -> pd.Da
 
         all_traces.append(trace_df)
 
-        if (trace_id + 1) % 100 == 0:
+        if (trace_id + 1) % 1000 == 0:
             print(f"Generated {trace_id + 1} / {n_traces} traces")
 
     database = pd.concat(all_traces, ignore_index=True)
