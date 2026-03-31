@@ -13,6 +13,13 @@ import matplotlib.pyplot as plt
 import poreflow as pf
 from poreflow.steps import predict
 
+def linear_interpolation(target_min, target_max, scale_min, scale_max, dict):
+    scaled_dict = {}
+    for key, value in dict.items():
+        scaled_value = (((value - scale_min) * (target_max - target_min)) / (scale_max - scale_min)) + target_min
+        scaled_dict[key] = scaled_value
+    return scaled_dict
+
 # ─── Simulation Parameters ────────────────────────────────────────────────────
 
 IOS             = 240   # pA — open state current (lowered from 320 to match real data)
@@ -77,6 +84,32 @@ AA_CLASS = {
     'I': 'nonpolar', 'P': 'nonpolar', 'F': 'nonpolar', 'M': 'nonpolar',
     'W': 'nonpolar',
 }
+
+HYDROPHOBICITY_OG = {'A': 1.800,
+                'R': -4.500,
+                'N': -3.500,
+                'D': -3.500,
+                'C':  2.500,
+                'Q': -3.500,
+                'E': -3.500,
+                'G': -0.400,
+                'H': -3.200,
+                'I':  4.500,
+                'L':  3.800,
+                'K': -3.900,
+                'M':  1.900,
+                'F':  2.800,
+                'P': -1.600,
+                'S': -0.800,
+                'T': -0.700,
+                'W': -0.900,
+                'Y': -1.300,
+                'V':  4.200}
+
+HYDROPHICITY = linear_interpolation(0, 1, -4.5, 4.5, HYDROPHOBICITY_OG)
+for aa, val in HYDROPHICITY.items():
+    AA_PROPERTIES[aa]['hydrophobicity'] = val
+
 # ─── Codon Table (one codon per AA for simplicity) ───────────────────────────
 
 CODON_TABLE = {
@@ -85,6 +118,8 @@ CODON_TABLE = {
     'L': 'CTT', 'I': 'ATT', 'P': 'CCT', 'M': 'ATG', 'H': 'CAT',
     'K': 'AAA', 'R': 'CGT', 'F': 'TTT', 'Y': 'TAT', 'W': 'TGG',
 }
+
+
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -128,6 +163,7 @@ def simulate_linker_region(dna_end: float, pep_start: float) -> np.ndarray:
         samples.extend([level] * _dwell_samples())
     return np.array(samples)
 
+GAMMA = 15 #pA for hydrophobic effects
 
 def _compute_window_current(peptide: str, center_idx: int) -> float:
     """
@@ -138,28 +174,40 @@ def _compute_window_current(peptide: str, center_idx: int) -> float:
     ~3-5 amino acids simultaneously. Edge positions are clamped (boundary
     residue repeated) rather than zero-padded.
 
+    Three physicochemical properties contribute:
+        - Volume:         larger AA → more blockage (ALPHA term)
+        - Charge:         positive → decreases current, negative → increases (BETA term)
+        - Hydrophobicity: higher hydrophobicity → more blockage (GAMMA term)
+          Values are normalised Kyte-Doolittle scores [0,1].
+
     Returns current in pA.
     """
     pep_baseline = PEP_BASELINE * IOS
     n = len(peptide)
 
-    weighted_volume = 0.0
-    weighted_charge = 0.0
-    total_weight = 0.0
+    weighted_volume        = 0.0
+    weighted_charge        = 0.0
+    weighted_hydrophobicity = 0.0
+    total_weight           = 0.0
 
     for d in range(-WINDOW_HALF, WINDOW_HALF + 1):
-        idx = max(0, min(n - 1, center_idx + d))  # clamp to valid range
-        aa = peptide[idx]
+        idx = max(0, min(n - 1, center_idx + d))
+        aa  = peptide[idx]
         weight = np.exp(-d ** 2 / 2.0)
-        weighted_volume += weight * AA_PROPERTIES[aa]['volume']
-        weighted_charge += weight * AA_PROPERTIES[aa]['charge']
-        total_weight += weight
 
-    weighted_volume /= total_weight
-    weighted_charge /= total_weight
+        weighted_volume         += weight * AA_PROPERTIES[aa]['volume']
+        weighted_charge         += weight * AA_PROPERTIES[aa]['charge']
+        weighted_hydrophobicity += weight * AA_PROPERTIES[aa]['hydrophobicity']
+        total_weight            += weight
 
-    return pep_baseline - ALPHA * weighted_volume - BETA * weighted_charge
+    weighted_volume         /= total_weight
+    weighted_charge         /= total_weight
+    weighted_hydrophobicity /= total_weight
 
+    return (pep_baseline
+            - ALPHA * weighted_volume
+            - BETA  * weighted_charge
+            - GAMMA * weighted_hydrophobicity)
 
 def simulate_peptide_region(peptide: str) -> np.ndarray:
     """
