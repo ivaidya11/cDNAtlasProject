@@ -26,6 +26,7 @@ IOS             = 240   # pA — open state current (lowered from 320 to match r
 PEP_BASELINE    = 0.5  # fraction of IOS for peptide baseline (~132 pA)
 ALPHA           = 80   # pA — how much volume affects current (bigger AA = more blockage) #used to be 20, changed alpha and beta so that peptide has a larger effect on the current
 BETA            = 20   # pA — how much charge affects current per unit charge #used to be 5
+GAMMA          = 15   # pA — how much hydrophobicity affects current per unit (0-1) hydrophobicity
 SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
 N_TRACES        = 2000  # number of traces to generate
@@ -163,7 +164,6 @@ def simulate_linker_region(dna_end: float, pep_start: float) -> np.ndarray:
         samples.extend([level] * _dwell_samples())
     return np.array(samples)
 
-GAMMA = 15 #pA for hydrophobic effects
 
 def _compute_window_current(peptide: str, center_idx: int) -> float:
     """
@@ -364,15 +364,15 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
     ax.legend()
     ax.grid(True)
     plt.tight_layout()
-    plt.savefig('example_trace.png', dpi=150)
+    plt.savefig('data/example_trace.png', dpi=150)
     plt.close()
-    print("Saved to example_trace_v2.png")
+    print("Saved to data/example_trace.png")
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    output_path = "nanopore_trace_database.csv"
+    output_path = "data/nanopore_trace_database.csv"
 
     print(f"Generating {N_TRACES} traces (peptide length = {PEP_LENGTH})...")
     print(f"IOS = {IOS} pA | alpha = {ALPHA} | beta = {BETA} | sigma_white = {SIGMA_WHITE} | sigma_flicker = {SIGMA_FLICKER}\n")

@@ -1,5 +1,7 @@
 nanopore_trace_database.csv
 features.csv
+updated_nanopore_trace_database.csv
+updated_features.csv
 
 __pycache__/
 *.pyc

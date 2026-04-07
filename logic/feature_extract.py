@@ -10,7 +10,8 @@ from database import AA_CLASS
 
 
 
-db = pd.read_csv('nanopore_trace_database.csv')
+db = pd.read_csv('data/updated_nanopore_trace_database.csv')
+final_save_path = 'data/updated_features.csv'
 
 features = []
 
@@ -75,7 +76,7 @@ df_features = pd.DataFrame(features)
 df_features['phys_class'] = [AA_CLASS.get(aa, 'Unknown') for aa in df_features['amino_acid']]
 
 print(df_features.head(20))
-df_features.to_csv('features.csv', index=False)
+df_features.to_csv(final_save_path, index=False)
 
 print(f"\nTotal steps: {len(df_features)}")
 print(f"\nAmino acid distribution:\n{df_features['amino_acid'].value_counts()}")
