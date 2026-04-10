@@ -13,12 +13,20 @@ import matplotlib.pyplot as plt
 import poreflow as pf
 from poreflow.steps import predict
 
+def linear_interpolation(target_min, target_max, scale_min, scale_max, dict):
+    scaled_dict = {}
+    for key, value in dict.items():
+        scaled_value = (((value - scale_min) * (target_max - target_min)) / (scale_max - scale_min)) + target_min
+        scaled_dict[key] = scaled_value
+    return scaled_dict
+
 # ─── Simulation Parameters ────────────────────────────────────────────────────
 
 IOS             = 240   # pA — open state current (lowered from 320 to match real data)
 PEP_BASELINE    = 0.5  # fraction of IOS for peptide baseline (~132 pA)
 ALPHA           = 80   # pA — how much volume affects current (bigger AA = more blockage) #used to be 20, changed alpha and beta so that peptide has a larger effect on the current
 BETA            = 20   # pA — how much charge affects current per unit charge #used to be 5
+GAMMA          = 15   # pA — how much hydrophobicity affects current per unit (0-1) hydrophobicity
 SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
 N_TRACES        = 2000  # number of traces to generate
@@ -44,27 +52,55 @@ MEAN_DWELL_MS   = 5   # ms — mean dwell time per step/residue (exponential dis
 #   This is the OPPOSITE of naive intuition — see beta term in level calculation below
 
 AA_PROPERTIES = {
-    'G': {'volume': 0.00, 'charge':  0},  # Glycine       — smallest
-    'A': {'volume': 0.11, 'charge':  0},  # Alanine       — small, neutral
-    'S': {'volume': 0.18, 'charge':  0},  # Serine        — small, polar
-    'T': {'volume': 0.26, 'charge':  0},  # Threonine     — polar
-    'C': {'volume': 0.20, 'charge':  0},  # Cysteine      — small, unique
-    'N': {'volume': 0.29, 'charge':  0},  # Asparagine    — polar
-    'D': {'volume': 0.27, 'charge': -1},  # Aspartate     — negative charge
-    'E': {'volume': 0.37, 'charge': -1},  # Glutamate     — negative charge
-    'Q': {'volume': 0.39, 'charge':  0},  # Glutamine     — polar
-    'V': {'volume': 0.35, 'charge':  0},  # Valine        — medium, nonpolar
-    'L': {'volume': 0.45, 'charge':  0},  # Leucine       — medium, nonpolar
-    'I': {'volume': 0.45, 'charge':  0},  # Isoleucine    — medium, nonpolar
-    'P': {'volume': 0.28, 'charge':  0},  # Proline       — rigid
-    'M': {'volume': 0.42, 'charge':  0},  # Methionine    — medium
-    'H': {'volume': 0.48, 'charge':  0},  # Histidine     — weakly positive
-    'K': {'volume': 0.46, 'charge': +1},  # Lysine        — positive charge
-    'R': {'volume': 0.63, 'charge': +1},  # Arginine      — positive, large
-    'F': {'volume': 0.64, 'charge':  0},  # Phenylalanine — bulky, aromatic
-    'Y': {'volume': 0.67, 'charge':  0},  # Tyrosine      — bulky, aromatic
-    'W': {'volume': 0.79, 'charge':  0},  # Tryptophan    — largest
+    'G': {'charge':  0},  # Glycine
+    'A': {'charge':  0},  # Alanine
+    'S': {'charge':  0},  # Serine
+    'T': {'charge':  0},  # Threonine
+    'C': {'charge':  0},  # Cysteine
+    'N': {'charge':  0},  # Asparagine
+    'D': {'charge': -1},  # Aspartate     — negative charge
+    'E': {'charge': -1},  # Glutamate     — negative charge
+    'Q': {'charge':  0},  # Glutamine
+    'V': {'charge':  0},  # Valine
+    'L': {'charge':  0},  # Leucine
+    'I': {'charge':  0},  # Isoleucine
+    'P': {'charge':  0},  # Proline
+    'M': {'charge':  0},  # Methionine
+    'H': {'charge':  0},  # Histidine
+    'K': {'charge': +1},  # Lysine        — positive charge
+    'R': {'charge': +1},  # Arginine      — positive, large
+    'F': {'charge':  0},  # Phenylalanine
+    'Y': {'charge':  0},  # Tyrosine
+    'W': {'charge':  0},  # Tryptophan
 }
+
+# Raw van der Waals volumes (Å³) — replace these with paper values
+VOLUME_OG = {
+    'G':  34.8,  # Glycine       — smallest
+    'A':  52.0,  # Alanine       — small, neutral
+    'S':  51.9,  # Serine        — small, polar
+    'T':  68.4,  # Threonine     — polar
+    'C':  65.0,  # Cysteine      — small, unique
+    'N': 69.6,  # Asparagine    — polar
+    'D': 65.4,  # Aspartate     — negative charge
+    'E': 77.5,  # Glutamate     — negative charge
+    'Q': 85.5,  # Glutamine     — polar
+    'V': 82.4,  # Valine        — medium, nonpolar
+    'L': 99.1,  # Leucine       — medium, nonpolar
+    'I': 99.1,  # Isoleucine    — medium, nonpolar
+    'P': 72.6,  # Proline       — rigid
+    'M': 96.9,  # Methionine    — medium
+    'H': 90.4,  # Histidine     — weakly positive
+    'K': 100.1,  # Lysine        — positive charge
+    'R': 118.9,  # Arginine      — positive, large
+    'F': 112.8,  # Phenylalanine — bulky, aromatic
+    'Y': 114.7,  # Tyrosine      — bulky, aromatic
+    'W': 135.5,  # Tryptophan    — largest
+}
+
+VOLUME = linear_interpolation(0, 1, min(VOLUME_OG.values()), max(VOLUME_OG.values()), VOLUME_OG)
+for aa, val in VOLUME.items():
+    AA_PROPERTIES[aa]['volume'] = val
 
 AA_LIST = list(AA_PROPERTIES.keys())
 
@@ -77,6 +113,32 @@ AA_CLASS = {
     'I': 'nonpolar', 'P': 'nonpolar', 'F': 'nonpolar', 'M': 'nonpolar',
     'W': 'nonpolar',
 }
+
+HYDROPHOBICITY_OG = {'A': 1.800,
+                'R': -4.500,
+                'N': -3.500,
+                'D': -3.500,
+                'C':  2.500,
+                'Q': -3.500,
+                'E': -3.500,
+                'G': -0.400,
+                'H': -3.200,
+                'I':  4.500,
+                'L':  3.800,
+                'K': -3.900,
+                'M':  1.900,
+                'F':  2.800,
+                'P': -1.600,
+                'S': -0.800,
+                'T': -0.700,
+                'W': -0.900,
+                'Y': -1.300,
+                'V':  4.200}
+
+HYDROPHICITY = linear_interpolation(0, 1, -4.5, 4.5, HYDROPHOBICITY_OG)
+for aa, val in HYDROPHICITY.items():
+    AA_PROPERTIES[aa]['hydrophobicity'] = val
+
 # ─── Codon Table (one codon per AA for simplicity) ───────────────────────────
 
 CODON_TABLE = {
@@ -85,6 +147,8 @@ CODON_TABLE = {
     'L': 'CTT', 'I': 'ATT', 'P': 'CCT', 'M': 'ATG', 'H': 'CAT',
     'K': 'AAA', 'R': 'CGT', 'F': 'TTT', 'Y': 'TAT', 'W': 'TGG',
 }
+
+
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -138,28 +202,40 @@ def _compute_window_current(peptide: str, center_idx: int) -> float:
     ~3-5 amino acids simultaneously. Edge positions are clamped (boundary
     residue repeated) rather than zero-padded.
 
+    Three physicochemical properties contribute:
+        - Volume:         larger AA → more blockage (ALPHA term)
+        - Charge:         positive → decreases current, negative → increases (BETA term)
+        - Hydrophobicity: higher hydrophobicity → more blockage (GAMMA term)
+          Values are normalised Kyte-Doolittle scores [0,1].
+
     Returns current in pA.
     """
     pep_baseline = PEP_BASELINE * IOS
     n = len(peptide)
 
-    weighted_volume = 0.0
-    weighted_charge = 0.0
-    total_weight = 0.0
+    weighted_volume        = 0.0
+    weighted_charge        = 0.0
+    weighted_hydrophobicity = 0.0
+    total_weight           = 0.0
 
     for d in range(-WINDOW_HALF, WINDOW_HALF + 1):
-        idx = max(0, min(n - 1, center_idx + d))  # clamp to valid range
-        aa = peptide[idx]
+        idx = max(0, min(n - 1, center_idx + d))
+        aa  = peptide[idx]
         weight = np.exp(-d ** 2 / 2.0)
-        weighted_volume += weight * AA_PROPERTIES[aa]['volume']
-        weighted_charge += weight * AA_PROPERTIES[aa]['charge']
-        total_weight += weight
 
-    weighted_volume /= total_weight
-    weighted_charge /= total_weight
+        weighted_volume         += weight * AA_PROPERTIES[aa]['volume']
+        weighted_charge         += weight * AA_PROPERTIES[aa]['charge']
+        weighted_hydrophobicity += weight * AA_PROPERTIES[aa]['hydrophobicity']
+        total_weight            += weight
 
-    return pep_baseline - ALPHA * weighted_volume - BETA * weighted_charge
+    weighted_volume         /= total_weight
+    weighted_charge         /= total_weight
+    weighted_hydrophobicity /= total_weight
 
+    return (pep_baseline
+            - ALPHA * weighted_volume
+            - BETA  * weighted_charge
+            - GAMMA * weighted_hydrophobicity)
 
 def simulate_peptide_region(peptide: str) -> np.ndarray:
     """
@@ -316,15 +392,15 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
     ax.legend()
     ax.grid(True)
     plt.tight_layout()
-    plt.savefig('example_trace.png', dpi=150)
+    plt.savefig('data/example_trace.png', dpi=150)
     plt.close()
-    print("Saved to example_trace_v2.png")
+    print("Saved to data/example_trace.png")
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    output_path = "nanopore_trace_database.csv"
+    output_path = "data/nanopore_trace_database.csv"
 
     print(f"Generating {N_TRACES} traces (peptide length = {PEP_LENGTH})...")
     print(f"IOS = {IOS} pA | alpha = {ALPHA} | beta = {BETA} | sigma_white = {SIGMA_WHITE} | sigma_flicker = {SIGMA_FLICKER}\n")
