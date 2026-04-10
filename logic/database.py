@@ -52,27 +52,55 @@ MEAN_DWELL_MS   = 5   # ms — mean dwell time per step/residue (exponential dis
 #   This is the OPPOSITE of naive intuition — see beta term in level calculation below
 
 AA_PROPERTIES = {
-    'G': {'volume': 0.00, 'charge':  0},  # Glycine       — smallest
-    'A': {'volume': 0.11, 'charge':  0},  # Alanine       — small, neutral
-    'S': {'volume': 0.18, 'charge':  0},  # Serine        — small, polar
-    'T': {'volume': 0.26, 'charge':  0},  # Threonine     — polar
-    'C': {'volume': 0.20, 'charge':  0},  # Cysteine      — small, unique
-    'N': {'volume': 0.29, 'charge':  0},  # Asparagine    — polar
-    'D': {'volume': 0.27, 'charge': -1},  # Aspartate     — negative charge
-    'E': {'volume': 0.37, 'charge': -1},  # Glutamate     — negative charge
-    'Q': {'volume': 0.39, 'charge':  0},  # Glutamine     — polar
-    'V': {'volume': 0.35, 'charge':  0},  # Valine        — medium, nonpolar
-    'L': {'volume': 0.45, 'charge':  0},  # Leucine       — medium, nonpolar
-    'I': {'volume': 0.45, 'charge':  0},  # Isoleucine    — medium, nonpolar
-    'P': {'volume': 0.28, 'charge':  0},  # Proline       — rigid
-    'M': {'volume': 0.42, 'charge':  0},  # Methionine    — medium
-    'H': {'volume': 0.48, 'charge':  0},  # Histidine     — weakly positive
-    'K': {'volume': 0.46, 'charge': +1},  # Lysine        — positive charge
-    'R': {'volume': 0.63, 'charge': +1},  # Arginine      — positive, large
-    'F': {'volume': 0.64, 'charge':  0},  # Phenylalanine — bulky, aromatic
-    'Y': {'volume': 0.67, 'charge':  0},  # Tyrosine      — bulky, aromatic
-    'W': {'volume': 0.79, 'charge':  0},  # Tryptophan    — largest
+    'G': {'charge':  0},  # Glycine
+    'A': {'charge':  0},  # Alanine
+    'S': {'charge':  0},  # Serine
+    'T': {'charge':  0},  # Threonine
+    'C': {'charge':  0},  # Cysteine
+    'N': {'charge':  0},  # Asparagine
+    'D': {'charge': -1},  # Aspartate     — negative charge
+    'E': {'charge': -1},  # Glutamate     — negative charge
+    'Q': {'charge':  0},  # Glutamine
+    'V': {'charge':  0},  # Valine
+    'L': {'charge':  0},  # Leucine
+    'I': {'charge':  0},  # Isoleucine
+    'P': {'charge':  0},  # Proline
+    'M': {'charge':  0},  # Methionine
+    'H': {'charge':  0},  # Histidine
+    'K': {'charge': +1},  # Lysine        — positive charge
+    'R': {'charge': +1},  # Arginine      — positive, large
+    'F': {'charge':  0},  # Phenylalanine
+    'Y': {'charge':  0},  # Tyrosine
+    'W': {'charge':  0},  # Tryptophan
 }
+
+# Raw van der Waals volumes (Å³) — replace these with paper values
+VOLUME_OG = {
+    'G':  34.8,  # Glycine       — smallest
+    'A':  52.0,  # Alanine       — small, neutral
+    'S':  51.9,  # Serine        — small, polar
+    'T':  68.4,  # Threonine     — polar
+    'C':  65.0,  # Cysteine      — small, unique
+    'N': 69.6,  # Asparagine    — polar
+    'D': 65.4,  # Aspartate     — negative charge
+    'E': 77.5,  # Glutamate     — negative charge
+    'Q': 85.5,  # Glutamine     — polar
+    'V': 82.4,  # Valine        — medium, nonpolar
+    'L': 99.1,  # Leucine       — medium, nonpolar
+    'I': 99.1,  # Isoleucine    — medium, nonpolar
+    'P': 72.6,  # Proline       — rigid
+    'M': 96.9,  # Methionine    — medium
+    'H': 90.4,  # Histidine     — weakly positive
+    'K': 100.1,  # Lysine        — positive charge
+    'R': 118.9,  # Arginine      — positive, large
+    'F': 112.8,  # Phenylalanine — bulky, aromatic
+    'Y': 114.7,  # Tyrosine      — bulky, aromatic
+    'W': 135.5,  # Tryptophan    — largest
+}
+
+VOLUME = linear_interpolation(0, 1, min(VOLUME_OG.values()), max(VOLUME_OG.values()), VOLUME_OG)
+for aa, val in VOLUME.items():
+    AA_PROPERTIES[aa]['volume'] = val
 
 AA_LIST = list(AA_PROPERTIES.keys())
 

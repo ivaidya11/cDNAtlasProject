@@ -2,6 +2,10 @@ nanopore_trace_database.csv
 features.csv
 updated_nanopore_trace_database.csv
 updated_features.csv
+updated_features_volume.csv
+amino_acid_properties.csv
+feature_by_cluster.csv
+
 
 __pycache__/
 *.pyc
