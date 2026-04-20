@@ -29,7 +29,7 @@ BETA            = 20   # pA — how much charge affects current per unit charge 
 GAMMA          = 15   # pA — how much hydrophobicity affects current per unit (0-1) hydrophobicity
 SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
-N_TRACES        = 2000  # number of traces to generate
+N_TRACES        = 10000  # number of traces to generate
 PEP_LENGTH      = 20     # amino acids per peptide # increased from 8 to 20
 LINKER_STEPS    = 6     # number of levels in linker region
 

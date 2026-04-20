@@ -5,6 +5,12 @@ updated_features.csv
 updated_features_volume.csv
 amino_acid_properties.csv
 feature_by_cluster.csv
+nanopore_feature_by_cluster.csv
+randomcontrol_feature_by_cluster.csv
+classification_results_by_cluster.csv
+amino_acid_clusters.csv
+randomcontrol_trace_database.csv
+
 
 
 __pycache__/
