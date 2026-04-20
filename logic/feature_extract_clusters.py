@@ -21,7 +21,7 @@ for _, row in df_clusters.iterrows():
     elif cluster == 4:
         CLUSTERS[aa] = '4, small'
 
-final_save_path = 'data/feature_by_cluster.csv'
+final_save_path = 'data/nanopore_feature_by_cluster.csv'
 
 features = []
 
