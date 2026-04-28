@@ -74,17 +74,23 @@ for trace_id, trace in db.groupby('trace_id'):
             # these are all to use to put into the feature vector for the classifer to train on,
             # i exclude the labels here because the knowledge of what exact amino acid is surrounding
             # the amino acid we're trying to classify is not somethign we'll know with the experiemental data? im still a bit confused on this
-            
-            'mean_minus2': ratio[0] * step_minus2['current_pA'].mean() if step_minus2 is not None else np.nan,
+            'weighted_window_current': (
+                ratio[0] * (step_minus2['current_pA'].mean() if step_minus2 is not None else np.nan) +
+                ratio[1] * (step_minus1['current_pA'].mean() if step_minus1 is not None else np.nan) +
+                ratio[2] * grp['current_pA'].mean() +
+                ratio[3] * (step_plus1['current_pA'].mean() if step_plus1 is not None else np.nan) +
+                ratio[4] * (step_plus2['current_pA'].mean() if step_plus2 is not None else np.nan)
+            ),
+            'mean_minus2': step_minus2['current_pA'].mean() if step_minus2 is not None else np.nan,
             # 'std_minus2': step_minus2['current_pA'].std() if step_minus2 is not None else np.nan,
             # 'dwell_minus2': step_minus2['time_ms'].max() - step_minus2['time_ms'].min() if step_minus2 is not None else np.nan,
-            'mean_minus1': ratio[1]* step_minus1['current_pA'].mean() if step_minus1 is not None else np.nan,
+            'mean_minus1': step_minus1['current_pA'].mean() if step_minus1 is not None else np.nan,
             # 'std_minus1': step_minus1['current_pA'].std() if step_minus1 is not None else np.nan,
             # 'dwell_minus1': step_minus1['time_ms'].max() - step_minus1['time_ms'].min() if step_minus1 is not None else np.nan,
-            'mean_plus1': ratio[3]*step_plus1['current_pA'].mean() if step_plus1 is not None else np.nan,
+            'mean_plus1': step_plus1['current_pA'].mean() if step_plus1 is not None else np.nan,
             # 'std_plus1': step_plus1['current_pA'].std() if step_plus1 is not None else np.nan,
             # 'dwell_plus1': step_plus1['time_ms'].max() - step_plus1['time_ms'].min() if step_plus1 is not None else np.nan,
-            'mean_plus2': ratio[4]*step_plus2['current_pA'].mean() if step_plus2 is not None else np.nan,
+            'mean_plus2': step_plus2['current_pA'].mean() if step_plus2 is not None else np.nan,
             # 'std_plus2': step_plus2['current_pA'].std() if step_plus2 is not None else np.nan,
             # 'dwell_plus2': step_plus2['time_ms'].max() - step_plus2['time_ms'].min() if step_plus2 is not None else np.nan,
             # so here we want a list of amino acis instead of just the one thats associated?

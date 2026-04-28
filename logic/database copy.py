@@ -63,7 +63,7 @@ AA_PROPERTIES = {
     'Q': {'charge':  0},  # Glutamine
     'V': {'charge':  0},  # Valine
     'L': {'charge':  0},  # Leucine
-    'I': {'charge':  0},  # Isoleucine — excluded: identical volume to Leucine
+    'I': {'charge':  0},  # Isoleucine
     'P': {'charge':  0},  # Proline
     'M': {'charge':  0},  # Methionine
     'H': {'charge':  0},  # Histidine
@@ -87,7 +87,7 @@ VOLUME_OG = {
     'Q': 85.5,  # Glutamine     — polar
     'V': 82.4,  # Valine        — medium, nonpolar
     'L': 99.1,  # Leucine       — medium, nonpolar
-    'I': 99.1,  # Isoleucine — excluded: identical volume to Leucine
+    'I': 99.1,  # Isoleucine    — medium, nonpolar
     'P': 72.6,  # Proline       — rigid
     'M': 96.9,  # Methionine    — medium
     'H': 90.4,  # Histidine     — weakly positive
@@ -110,8 +110,7 @@ AA_CLASS = {
     'S': 'polar',    'T': 'polar',    'C': 'polar',
     'N': 'polar',    'Q': 'polar',    'Y': 'polar',    'H': 'polar',
     'G': 'nonpolar', 'A': 'nonpolar', 'V': 'nonpolar', 'L': 'nonpolar',
-    'I': 'nonpolar',  # excluded
-    'P': 'nonpolar', 'F': 'nonpolar', 'M': 'nonpolar',
+    'I': 'nonpolar', 'P': 'nonpolar', 'F': 'nonpolar', 'M': 'nonpolar',
     'W': 'nonpolar',
 }
 
@@ -124,7 +123,7 @@ HYDROPHOBICITY_OG = {'A': 1.800,
                 'E': -3.500,
                 'G': -0.400,
                 'H': -3.200,
-                'I':  4.500,  # can beexcluded
+                'I':  4.500,
                 'L':  3.800,
                 'K': -3.900,
                 'M':  1.900,
@@ -145,8 +144,7 @@ for aa, val in HYDROPHICITY.items():
 CODON_TABLE = {
     'G': 'GGT', 'A': 'GCT', 'S': 'TCT', 'T': 'ACT', 'C': 'TGT',
     'N': 'AAT', 'D': 'GAT', 'E': 'GAA', 'Q': 'CAA', 'V': 'GTT',
-    'L': 'CTT', 'I': 'ATT',  # excluded
-    'P': 'CCT', 'M': 'ATG', 'H': 'CAT',
+    'L': 'CTT', 'I': 'ATT', 'P': 'CCT', 'M': 'ATG', 'H': 'CAT',
     'K': 'AAA', 'R': 'CGT', 'F': 'TTT', 'Y': 'TAT', 'W': 'TGG',
 }
 
