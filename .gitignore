@@ -1,22 +1,20 @@
-# Python
+nanopore_trace_database.csv
+features.csv
+updated_nanopore_trace_database.csv
+updated_features.csv
+updated_features_volume.csv
+amino_acid_properties.csv
+feature_by_cluster.csv
+nanopore_feature_by_cluster.csv
+randomcontrol_feature_by_cluster.csv
+classification_results_by_cluster.csv
+amino_acid_clusters.csv
+randomcontrol_trace_database.csv
+
+
+
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
+
 .venv/
-
-# Jupyter
-.ipynb_checkpoints/
-
-# macOS
 .DS_Store
-
-# IDE
-.idea/
-
-# Data / generated files
-*.csv
-*.png
-
-# Misc
-0.2.5
-uv.lock
