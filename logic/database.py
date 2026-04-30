@@ -66,7 +66,7 @@ AA_PROPERTIES = {
     'I': {'charge':  0},  # Isoleucine — excluded: identical volume to Leucine
     'P': {'charge':  0},  # Proline
     'M': {'charge':  0},  # Methionine
-    'H': {'charge':  0},  # Histidine
+    'H': {'charge':  0.3},  # Histidine
     'K': {'charge': +1},  # Lysine        — positive charge
     'R': {'charge': +1},  # Arginine      — positive, large
     'F': {'charge':  0},  # Phenylalanine
