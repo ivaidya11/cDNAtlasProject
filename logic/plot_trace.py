@@ -27,13 +27,13 @@ def plot_trace(database: pd.DataFrame, trace_id: int = 0, IOS: float = 240, ax=N
 
     for region, group in trace.groupby('region', sort=False):
         ax.plot(group['time_ms'], group['current_pA'],
-                label=region, color=colors[region], linewidth=0.8)
+                label=region, color=colors[region], linewidth=1)
 
-    ax.axhline(IOS, color='gray', linestyle='--', alpha=0.4, label='IOS reference')
+    ax.axhline(IOS, color='gray', linestyle='--', alpha=0.8, label='IOS reference', linewidth=1)
     ax.set_title(f'Trace {trace_id} — Peptide: {peptide}')
     ax.set_xlabel('Time (ms)')
     ax.set_ylabel('Current (pA)')
-    ax.legend()
+    ax.legend(fontsize = 20, loc = 'upper right')
     ax.grid(True)
 
     if standalone:

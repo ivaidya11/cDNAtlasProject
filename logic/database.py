@@ -29,7 +29,7 @@ BETA            = 20   # pA — how much charge affects current per unit charge 
 GAMMA          = 15   # pA — how much hydrophobicity affects current per unit (0-1) hydrophobicity
 SIGMA_WHITE     = 1.0   # pA — white (Gaussian) noise standard deviation
 SIGMA_FLICKER   = 1.0   # pA — 1/f (flicker) noise amplitude
-N_TRACES        = 10000  # number of traces to generate
+N_TRACES        = 30000  # number of traces to generate
 PEP_LENGTH      = 20     # amino acids per peptide # increased from 8 to 20
 LINKER_STEPS    = 6     # number of levels in linker region
 
@@ -230,6 +230,11 @@ def _compute_window_current(peptide: str, center_idx: int) -> float:
         weighted_hydrophobicity += weight * AA_PROPERTIES[aa]['hydrophobicity']
         total_weight            += weight
 
+    # Weighted average rather than weighted sum: divides by total weight so the
+    # result stays on the same scale as the raw property values regardless of
+    # window size (handles edge positions where fewer neighbors are available).
+
+
     weighted_volume         /= total_weight
     weighted_charge         /= total_weight
     weighted_hydrophobicity /= total_weight
@@ -402,7 +407,7 @@ def plot_example_trace(database: pd.DataFrame, trace_id: int = 0):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    output_path = "data/nanopore_trace_database.csv"
+    output_path = "data/nanopore_trace_database_BIG.csv"
 
     print(f"Generating {N_TRACES} traces (peptide length = {PEP_LENGTH})...")
     print(f"IOS = {IOS} pA | alpha = {ALPHA} | beta = {BETA} | sigma_white = {SIGMA_WHITE} | sigma_flicker = {SIGMA_FLICKER}\n")

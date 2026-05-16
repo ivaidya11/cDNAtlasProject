@@ -10,6 +10,9 @@ randomcontrol_feature_by_cluster.csv
 classification_results_by_cluster.csv
 amino_acid_clusters.csv
 randomcontrol_trace_database.csv
+nanopore_trace_database_BIG.csv
+nanopore_feature_BIG_DATA_cluster.csv
+
 
 
 

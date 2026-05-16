@@ -1,0 +1,55 @@
+[input]
+name = 'TUD257703_20251215_FBE41737_MN45752_sequencing_run_C011_D_67671'
+folder_path = '/Users/iravaidya/Documents/Bachelors/BEP/raw_data/'
+file_name = 'TUD257703_20251215_FBE41737_MN45752_sequencing_run_C011_D_67671.fast5'
+resample_to_freq = 5000
+filter_freq = 1000
+
+[output]
+path = './'
+
+[env]
+processes = 2
+verbose = 0
+
+[plot]
+out = './Figures'
+
+[event_finding]
+open_state_range = [
+    200,
+    300,
+]
+voltage_range = [
+    175,
+    185,
+]
+closing_iterations = 10
+boundary_trim = [
+    1,
+    1,
+]
+n_components = 3
+degree = 2
+min_frac_os = 0.01
+min_duration = 1.0
+
+[step_finding]
+sensitivity = 3.0
+min_level_length = 10
+
+[event_filtering]
+min_duration = 1.0
+min_n_steps = 45
+max_n_steps = 800
+min_binned_entropy_of_means = 2.5
+min_step_rate = 12.0
+min_ios = 0.0
+max_ios = 0.0
+
+[boundary]
+template_DNA_5_3 = 'TCCTTTTATCGTCATCATCTTTGTAATCGCCGCT'
+trim_right = 8
+ref_length = 54
+segment_step_to_end = 4
+window_length = 40
