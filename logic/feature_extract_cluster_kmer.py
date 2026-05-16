@@ -11,10 +11,10 @@ from logic.clustering_cnn import get_clusters
 
 
 # df_clusters = pd.read_csv('data/amino_acid_clusters.csv')
-db = pd.read_csv('data/nanopore_trace_database_BIG.csv')
+db = pd.read_csv('data/randomcontrol_trace_database.csv')
 
 
-final_save_path = 'data/nanopore_training_BIG_feature_by_kmer_cluster.csv'
+final_save_path = 'data/random_control_feature_by_kmer_cluster.csv'
 clusters = get_clusters(n_clusters=7)
 features = []
 

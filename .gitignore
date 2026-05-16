@@ -1,3 +1,4 @@
+data/*.csv
 nanopore_trace_database.csv
 features.csv
 updated_nanopore_trace_database.csv
@@ -15,6 +16,7 @@ nanopore_training_BIG_feature_by_cluster.csv
 data/nanopore_training_BIG_feature_by_cluster.csv
 data/nanopore_feature_BIG_DATA_cluster.csv
 peptidereads_fig2.mat
+data/nanopore_training_BIG_feature_by_kmer_cluster.csv
 
 
 __pycache__/
